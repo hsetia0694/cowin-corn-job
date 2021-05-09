@@ -33,8 +33,10 @@ app.get('/start', (request, response) => {
         database.collection(collection).find({}).toArray(function (error, data) {
             data.forEach(e => {
                 try {
+                    console.log(`-----------------------URL----------- https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/findByPin?pincode=${e.pinCode}&date=${e.date}`);
                     req(`https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/findByPin?pincode=${e.pinCode}&date=${e.date}`, { json: true }, (err, res, body) => {
                         if (err) { return console.log(err); }
+                        console.log('Body ==================================== ',body);
                         if (body.sessions.length) {
                             console.log(`Found for ${e.name} with mobile number as ${e.mobile}`);
                             sendingMail(e, body.sessions);
