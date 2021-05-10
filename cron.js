@@ -34,6 +34,7 @@ cron.schedule("*/20 * * * * *", () => {
             try {
                 const cowin_server = `https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/findByPin?pincode=${e.pinCode}&date=${e.date}`;
                 let option = {
+                    method: 'GET',
                     url: `https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/findByPin?pincode=${e.pinCode}&date=${e.date}`,
                     json: true,
                     headers: {
@@ -45,7 +46,7 @@ cron.schedule("*/20 * * * * *", () => {
                 console.log(`-----------------------URL---------------- `, cowin_server);
                 req(option, (err, res, body) => {
                     if (err) { return console.log(err); }
-                    console.log('------------------------- Body ---------------------------- ', body);
+                    console.log('------------------------- Body ---------------------------- ', ((body || {})['sessions'] || [])['length']);
                     if (((body || {})['sessions'] || [])['length']) {
                         console.log(`Found for ${e.name} with mobile number as ${e.mobile}`);
                         sendingMail(e, body.sessions);
