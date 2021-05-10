@@ -40,7 +40,8 @@ cron.schedule("*/20 * * * * *", () => {
                     headers: {
                         'User-Agent': 'Mozilla',
                         'Accept': 'application/json',
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'Cookie': 'troute=t1;'
                     }
                 }
                 console.log(`-----------------------URL---------------- `, cowin_server);
