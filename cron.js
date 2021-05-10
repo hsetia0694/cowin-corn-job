@@ -32,8 +32,18 @@ cron.schedule("*/20 * * * * *", () => {
     database.collection(collection).find({}).toArray(function (error, data) {
         data.forEach(e => {
             try {
-                console.log(`-----------------------URL---------------- https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/findByPin?pincode=${e.pinCode}&date=${e.date}`);
-                req(`https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/findByPin?pincode=${e.pinCode}&date=${e.date}`, { json: true }, (err, res, body) => {
+                const cowin_server = `https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/findByPin?pincode=${e.pinCode}&date=${e.date}`;
+                let option = {
+                    url: `https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/findByPin?pincode=${e.pinCode}&date=${e.date}`,
+                    json: true,
+                    headers: {
+                        'User-Agent': 'Mozilla',
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                }
+                console.log(`-----------------------URL---------------- `, cowin_server);
+                req(option, (err, res, body) => {
                     if (err) { return console.log(err); }
                     console.log('------------------------- Body ---------------------------- ', body);
                     if (((body || {})['sessions'] || [])['length']) {
