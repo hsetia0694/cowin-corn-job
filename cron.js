@@ -27,28 +27,25 @@ app.get('/api/status', (request, response) => {
     response.status(200).json({ status: 'Up and running.' });
 })
 
-app.get('/start', (request, response) => {
-    cron.schedule("*/20 * * * * *", () => {
-        console.log("Looking for scheduled entries");
-        database.collection(collection).find({}).toArray(function (error, data) {
-            data.forEach(e => {
-                try {
-                    console.log(`-----------------------URL----------- https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/findByPin?pincode=${e.pinCode}&date=${e.date}`);
-                    req(`https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/findByPin?pincode=${e.pinCode}&date=${e.date}`, { json: true }, (err, res, body) => {
-                        if (err) { return console.log(err); }
-                        console.log('Body ==================================== ',body);
-                        if (body.sessions.length) {
-                            console.log(`Found for ${e.name} with mobile number as ${e.mobile}`);
-                            sendingMail(e, body.sessions);
-                        }
-                    });
-                } catch (exception) {
-                    console.error('Exception occured while finding slot.');
-                }
-            })
-        });
-    })
-    response.status(200).json({ status: 'Scheduler started.' });
+cron.schedule("*/20 * * * * *", () => {
+    console.log("----------------------- Looking for scheduled entries ------------------------------");
+    database.collection(collection).find({}).toArray(function (error, data) {
+        data.forEach(e => {
+            try {
+                console.log(`-----------------------URL---------------- https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/findByPin?pincode=${e.pinCode}&date=${e.date}`);
+                req(`https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/findByPin?pincode=${e.pinCode}&date=${e.date}`, { json: true }, (err, res, body) => {
+                    if (err) { return console.log(err); }
+                    console.log('------------------------- Body ---------------------------- ', body);
+                    if (((body || {})['sessions'] || [])['length']) {
+                        console.log(`Found for ${e.name} with mobile number as ${e.mobile}`);
+                        sendingMail(e, body.sessions);
+                    }
+                });
+            } catch (exception) {
+                console.error('Exception occured while finding slot.');
+            }
+        })
+    });
 })
 
 app.post('/schedule', urlencodedParser, function (request, response) {
@@ -90,7 +87,7 @@ sendingMail = (userData, centerDetails) => {
         from: "Cowin Realtime",
         to: userData.email,
         subject: "Vaccination Center Found!",
-        html: `<h1>Vaccination Center Found at ${centerDetails.map(e => e.name).toString()}</h1>`
+        html: `<h1>Vaccination center found: ${centerDetails.map(e => e.name).toString()}</h1>`
     }
 
     try {
