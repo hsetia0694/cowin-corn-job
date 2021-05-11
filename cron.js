@@ -40,7 +40,7 @@ cron.schedule("*/20 * * * * *", () => {
                         url: `https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/findByPin?pincode=${e.pinCode}&date=${e.date}`,
                         json: true,
                         headers: {
-                            'User-Agent': 'Mozilla',
+                            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36',
                             'Accept': 'application/json',
                             'Content-Type': 'application/json',
                             'Cookie': 'troute=t1;'
