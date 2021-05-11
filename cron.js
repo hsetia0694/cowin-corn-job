@@ -5,6 +5,7 @@ const cron = require("node-cron");
 const nodemailer = require("nodemailer");
 var mongodb = require("mongodb");
 const req = require('request');
+const moment = require('moment');
 var ObjectID = mongodb.ObjectID;
 var database;
 var collection = "vaccination_center";
@@ -32,29 +33,34 @@ cron.schedule("*/20 * * * * *", () => {
     database.collection(collection).find({}).toArray(function (error, data) {
         data.forEach(e => {
             try {
-                const cowin_server = `https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/findByPin?pincode=${e.pinCode}&date=${e.date}`;
-                let option = {
-                    method: 'GET',
-                    url: `https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/findByPin?pincode=${e.pinCode}&date=${e.date}`,
-                    json: true,
-                    headers: {
-                        'User-Agent': 'Mozilla',
-                        'Accept': 'application/json',
-                        'Content-Type': 'application/json',
-                        'Cookie': 'troute=t1;'
+                if (moment(e.date, "DD-MM-YYYY").isSameOrAfter(moment())) {
+                    const cowin_server = `https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/findByPin?pincode=${e.pinCode}&date=${e.date}`;
+                    let option = {
+                        method: 'GET',
+                        url: `https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/findByPin?pincode=${e.pinCode}&date=${e.date}`,
+                        json: true,
+                        headers: {
+                            'User-Agent': 'Mozilla',
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'Cookie': 'troute=t1;'
+                        }
                     }
+                    console.log(`-----------------------URL---------------- `, cowin_server);
+                    req(option, (err, res, body) => {
+                        if (err) { return console.log(err); }
+                        console.log('------------------------- Body ---------------------------- ', body);
+                        if (((body || {})['sessions'] || [])['length']) {
+                            console.log(`Found for ${e.name} with mobile number as ${e.mobile}`);
+                            sendingMail(e, body.sessions, "Vaccination Center Found!", `<h1>Vaccination center found: ${centerDetails.map(e => e.name).toString()}</h1>`);
+                        }
+                    });
+                } else {
+                    sendingMail(e, [], "Vaccination Center Not Found!", `<h1>Vaccination center not found for ${e.date}. Please reschedule again for future date.</h1>`);
+                    console.log(`Vaccination center not found for ${e.name}, dated: ${e.date}.`)
                 }
-                console.log(`-----------------------URL---------------- `, cowin_server);
-                req(option, (err, res, body) => {
-                    if (err) { return console.log(err); }
-                    console.log('------------------------- Body ---------------------------- ', ((body || {})['sessions'] || [])['length']);
-                    if (((body || {})['sessions'] || [])['length']) {
-                        console.log(`Found for ${e.name} with mobile number as ${e.mobile}`);
-                        sendingMail(e, body.sessions);
-                    }
-                });
             } catch (exception) {
-                console.error('Exception occured while finding slot.');
+                console.error('Exception occured while finding slot.', exception);
             }
         })
     });
@@ -94,12 +100,12 @@ app.post('/schedule', urlencodedParser, function (request, response) {
 
 })
 
-sendingMail = (userData, centerDetails) => {
+sendingMail = (userData, centerDetails, subject, body) => {
     let mailOptions = {
         from: "Cowin Realtime",
         to: userData.email,
-        subject: "Vaccination Center Found!",
-        html: `<h1>Vaccination center found: ${centerDetails.map(e => e.name).toString()}</h1>`
+        subject: subject,
+        html: body
     }
 
     try {
